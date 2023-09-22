@@ -7,7 +7,9 @@ defmodule Patchwork.Games.Game do
             current_patch: nil,
             # can be :start, :started, :finished
             state: :start,
-            loading_patches: []
+            loading_patches: [],
+            players: [],
+            logs: []
 
   @height 3
   @width 3
@@ -19,10 +21,20 @@ defmodule Patchwork.Games.Game do
   end
 
   def new() do
-    %Patchwork.Games.Game{id: Ecto.UUID.generate(), patches: init_patches(), height: @height, width: @width}
+    %Patchwork.Games.Game{
+      id: Ecto.UUID.generate(),
+      patches: init_patches(),
+      height: @height,
+      width: @width
+    }
   end
 
   def new(height, width) do
-    %Patchwork.Games.Game{id: Ecto.UUID.generate(), patches: init_patches(), height: height, width: width}
+    %Patchwork.Games.Game{
+      id: Ecto.UUID.generate(),
+      patches: init_patches(),
+      height: height,
+      width: width
+    }
   end
 end

@@ -114,6 +114,6 @@ defmodule Patchwork.Images do
       ExAws.S3.put_object(bucket, file_name, image_binary)
       |> ExAws.request!()
 
-    "#{System.get_env("CLOUDFLARE_PUBLIC_URL")}/#{file_name}" |> IO.inspect(label: "CLOUDFLARE_PUBLIC_URL")
+    "#{System.get_env("CLOUDFLARE_PUBLIC_URL")}/#{file_name}"
   end
 end

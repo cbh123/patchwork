@@ -1,4 +1,6 @@
 <div
+  id="game"
+  phx-hook="AssignUsername"
   class="grid"
   style={"grid-template-rows: repeat(#{@game.height}, 1fr); grid-template-columns: repeat(#{@game.width}, 1fr);"}
 >
@@ -26,7 +28,13 @@
 </div>
 
 <.modal id="settings">
+  <.header class="mb-6">Restart</.header>
+  <.button phx-click={JS.push("reset") |> hide_modal("settings")}>Restart Game</.button>
+
+  <hr class="my-16" />
+
   <.form for={@settings_form} phx-submit={hide_modal("settings") |> JS.push("submit-settings")}>
+    <.header class="mb-6">Change Size</.header>
     <.label>Height</.label>
     <.input type="number" name="height" min="0" max="100" value={@game.height} />
 
@@ -41,10 +49,19 @@
 </.modal>
 
 <div class="fixed top-1 right-1">
-  <.outline_button phx-click="reset">Reset</.outline_button>
-  <.outline_button phx-click={show_modal("settings")} id="download" phx-hook="Download">
+  <.link href="https://github.com/cbh123/patchwork">
+    <.outline_button>Code</.outline_button>
+  </.link>
+
+  <.outline_button phx-click={show_modal("settings")}>
     Settings
   </.outline_button>
+</div>
+
+<div class="fixed top-16 right-2 font-bold text-xs bg-gray-100 bg-opacity-50 p-5">
+  <%= for log <- @game.logs do %>
+    <p><%= log %></p>
+  <% end %>
 </div>
 
 <form class="fixed bottom-0 w-full p-4 flex bg-slate-100 shadow-md" phx-submit="submit">

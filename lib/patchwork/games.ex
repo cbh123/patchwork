@@ -5,6 +5,18 @@ defmodule Patchwork.Games do
 
   def new(height, width), do: Game.new(height, width)
 
+  def add_player(game, username) do
+    if Enum.member?(game.players, username) do
+      game
+    else
+      %{game | :players => game.players ++ [username]}
+    end
+  end
+
+  def add_log(game, log) do
+    %{game | :logs => game.logs ++ [log]} |> IO.inspect(label: "new game logs")
+  end
+
   def set_patch!(game, {x, y}, url) do
     new_patches = %{game.patches | {x, y} => url}
     %{game | :patches => new_patches}
