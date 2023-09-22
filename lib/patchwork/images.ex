@@ -63,7 +63,7 @@ defmodule Patchwork.Images do
   end
 
   defp gen_image(nil, left_image, base) do
-    base |> Image.compose!(left_crop(image), x: 0, y: 0)
+    base |> Image.compose!(left_crop(left_image), x: 0, y: 0)
   end
 
   defp gen_image(top_image, left_image, base) do
