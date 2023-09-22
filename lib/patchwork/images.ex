@@ -20,6 +20,10 @@ defmodule Patchwork.Images do
       |> Image.write!(:memory, suffix: ".png")
       |> binary_to_data_uri("image/png")
 
+    # save image / mask to files
+    # gen_image(top_image, left_image, base) |> Image.write!("image.png")
+    # gen_mask(top_image, left_image, base) |> Image.write!("mask.png")
+
     %{image: image, mask: mask, height: height, width: width}
   end
 
@@ -45,30 +49,21 @@ defmodule Patchwork.Images do
   defp left_crop(image) do
     height = Image.height(image)
     width = Image.width(image)
-    Image.crop!(image, width - @mask_size, @mask_size, @mask_size, height - @mask_size)
+    Image.crop!(image, width - @mask_size, 0, @mask_size, height)
   end
 
   defp top_crop(image) do
-    height = Image.height(image)
-    width = Image.width(image)
-    Image.crop!(image, @mask_size, height - @mask_size, width - @mask_size, @mask_size)
+    height = Image.height(image) |> IO.inspect(label: "top crop height")
+    width = Image.width(image) |> IO.inspect(label: "top crop width")
+    Image.crop!(image, 0, height - @mask_size, width, @mask_size)
   end
 
-  defp gen_image(image, nil, base) do
-    height = Image.height(image)
-    width = Image.width(image)
-
-    top_crop = Image.crop!(image, 0, height - @mask_size, width, @mask_size)
-    base |> Image.compose!(top_crop, x: 0, y: 0)
+  defp gen_image(top_image, nil, base) do
+    base |> Image.compose!(top_crop(top_image), x: 0, y: 0)
   end
 
-  defp gen_image(nil, image, base) do
-    height = Image.height(image)
-    width = Image.width(image)
-
-    left_crop = Image.crop!(image, width - @mask_size, 0, @mask_size, height)
-
-    base |> Image.compose!(left_crop, x: 0, y: 0)
+  defp gen_image(nil, left_image, base) do
+    base |> Image.compose!(left_crop(image), x: 0, y: 0)
   end
 
   defp gen_image(top_image, left_image, base) do

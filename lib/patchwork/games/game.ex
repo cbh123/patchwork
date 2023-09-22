@@ -11,8 +11,8 @@ defmodule Patchwork.Games.Game do
             players: [],
             logs: []
 
-  @height 3
-  @width 3
+  @height 10
+  @width 10
 
   defp init_patches() do
     for(i <- 0..(@height - 1), do: for(j <- 0..(@width - 1), do: {{i, j}, nil}))
