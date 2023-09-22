@@ -1,0 +1,54 @@
+<div
+  class="grid"
+  style={"grid-template-rows: repeat(#{@game.height}, 1fr); grid-template-columns: repeat(#{@game.width}, 1fr);"}
+>
+  <%= for row <- 0..(@game.height - 1) do %>
+    <%= for col <- 0..(@game.width - 1) do %>
+      <%= if get(@game, {row, col}) do %>
+        <img
+          src={get(@game, {row, col}) |> Patchwork.Images.crop_bottom_right()}
+          class="aspect-square"
+          alt=""
+        />
+      <% else %>
+        <div class={"#{if Patchwork.Games.valid_patch?(@game, row, col), do: "shadow-md"} relative border-right border-r border-b border-slate-200 aspect-square"}>
+          <div
+            :if={{row, col} in @game.loading_patches}
+            class="flex items-center justify-center h-full"
+          >
+            <.spinner />
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>
+
+<.modal id="settings">
+  <.form for={@settings_form} phx-submit={hide_modal("settings") |> JS.push("submit-settings")}>
+    <.label>Height</.label>
+    <.input type="number" name="height" min="0" max="100" value={@game.height} />
+
+    <.label>Width</.label>
+    <.input type="number" name="width" min="0" max="100" value={@game.width} />
+
+    <br />
+    <.button type="submit" class="rounded-none">
+      New game
+    </.button>
+  </.form>
+</.modal>
+
+<div class="fixed top-1 right-1">
+  <.outline_button phx-click="reset">Reset</.outline_button>
+  <.outline_button phx-click={show_modal("settings")} id="download" phx-hook="Download">
+    Settings
+  </.outline_button>
+</div>
+
+<form class="fixed bottom-0 w-full p-4 flex bg-slate-100 shadow-md" phx-submit="submit">
+  <input type="text" class="flex-grow" name="prompt" placeholder="Enter a prompt to add a patch" />
+  <.button type="submit" class="rounded-none">
+    Go
+  </.button>
+</form>
