@@ -5,21 +5,12 @@
   <%= for row <- 0..(@game.height - 1) do %>
     <%= for col <- 0..(@game.width - 1) do %>
       <%= if get(@game, {row, col}) do %>
-      <div class="relative">
-        <.button phx-click={JS.toggle(to: "#uncropped-#{row}-#{col}") |> JS.toggle(to: "#cropped-#{row}-#{col}")} class="absolute top-0 left-0">Toggle</.button>
         <img
           id={"cropped-#{row}-#{col}"}
-          src={get(@game, {row, col}) |> Patchwork.Images.crop_bottom_right()}
+          src={get(@game, {row, col})}
           class="aspect-square"
           alt=""
         />
-        <img
-          id={"uncropped-#{row}-#{col}"}
-          src={get(@game, {row, col})}
-          class="aspect-square hidden"
-          alt=""
-        />
-     </div>
       <% else %>
         <div class={"#{if Patchwork.Games.valid_patch?(@game, row, col), do: "shadow-md"} relative border-right border-r border-b border-slate-200 aspect-square"}>
           <div

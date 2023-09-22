@@ -44,6 +44,8 @@ defmodule Patchwork.Games do
       mask: mask
     )
     |> Enum.at(0)
+    |> Patchwork.Images.crop_bottom_right()
+    |> Patchwork.Images.save_r2!("game-#{game.id}-#{x}-#{y}")
   end
 
   def gen_test_image(_game, {x, y}, _prompt) do

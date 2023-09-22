@@ -1,6 +1,7 @@
 defmodule Patchwork.Games.Game do
-  @enforce_keys [:patches, :height, :width]
-  defstruct patches: %{},
+  @enforce_keys [:id, :patches, :height, :width]
+  defstruct id: nil,
+            patches: %{},
             height: nil,
             width: nil,
             current_patch: nil,
@@ -18,10 +19,10 @@ defmodule Patchwork.Games.Game do
   end
 
   def new() do
-    %Patchwork.Games.Game{patches: init_patches(), height: @height, width: @width}
+    %Patchwork.Games.Game{id: Ecto.UUID.generate(), patches: init_patches(), height: @height, width: @width}
   end
 
   def new(height, width) do
-    %Patchwork.Games.Game{patches: init_patches(), height: height, width: width}
+    %Patchwork.Games.Game{id: Ecto.UUID.generate(), patches: init_patches(), height: height, width: width}
   end
 end

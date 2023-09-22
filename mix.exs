@@ -56,7 +56,7 @@ defmodule Patchwork.MixProject do
       {:image, "~> 0.37"},
       {:req, "~> 0.4.3"},
       {:ex_aws, "~> 2.1"},
-      {:ex_aws_s3, "~> 2.0"},
+      {:ex_aws_s3, "~> 2.0"}
     ]
   end
 

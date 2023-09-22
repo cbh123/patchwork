@@ -20,9 +20,6 @@ defmodule Patchwork.Images do
       |> Image.write!(:memory, suffix: ".png")
       |> binary_to_data_uri("image/png")
 
-    gen_image(top_image, left_image, base) |> Image.write("image.png", png: [])
-    gen_mask(top_image, left_image, base)  |> Image.write("mask.png", png: [])
-
     %{image: image, mask: mask, height: height, width: width}
   end
 
@@ -31,7 +28,7 @@ defmodule Patchwork.Images do
     image = fetch_image(image_url)
 
     # Calculate the x, y coordinates for cropping the bottom right portion
-    {width, height} = {Image.width(image), Image.height(image)} |> IO.inspect(label: "image height/width")
+    {width, height} = {Image.width(image), Image.height(image)}
     x = width - @height
     y = height - @height
 
@@ -39,8 +36,7 @@ defmodule Patchwork.Images do
     cropped_image = Image.crop!(image, x, y, 768, 768)
 
     # Write the cropped image to a buffer
-    cropped_image |> Image.write!(:memory, suffix: ".png") |> binary_to_data_uri("image/png")
-    # image_url
+    cropped_image |> Image.write!(:memory, suffix: ".png")
   end
 
   defp left_mask(), do: Image.Shape.rect!(@mask_size, @height, fill_color: "black", opacity: 1.0)
@@ -55,7 +51,7 @@ defmodule Patchwork.Images do
   defp top_crop(image) do
     height = Image.height(image)
     width = Image.width(image)
-    Image.crop!(image, @mask_size, height - @mask_size, width - @mask_size , @mask_size)
+    Image.crop!(image, @mask_size, height - @mask_size, width - @mask_size, @mask_size)
   end
 
   defp gen_image(image, nil, base) do
@@ -110,7 +106,7 @@ defmodule Patchwork.Images do
     "data:#{mime_type};base64,#{base64}"
   end
 
-  def save_r2(image_binary, uuid) when is_binary(image_binary) do
+  def save_r2!(image_binary, uuid) do
     file_name = "prediction-#{uuid}.png"
     bucket = System.get_env("BUCKET_NAME")
 
@@ -118,20 +114,6 @@ defmodule Patchwork.Images do
       ExAws.S3.put_object(bucket, file_name, image_binary)
       |> ExAws.request!()
 
-    "#{System.get_env("CLOUDFLARE_PUBLIC_URL")}/#{file_name}"
-  end
-
-  def save_r2!(image_url, uuid) do
-    {:ok, resp} = :httpc.request(:get, {image_url, []}, [], body_format: :binary)
-    {{_, 200, ~c"OK"}, _headers, image_binary} = resp
-
-    file_name = "prediction-#{uuid}.png"
-    bucket = System.get_env("BUCKET_NAME")
-
-    %{status_code: 200} =
-      ExAws.S3.put_object(bucket, file_name, image_binary)
-      |> ExAws.request!()
-
-    "#{System.get_env("CLOUDFLARE_PUBLIC_URL")}/#{file_name}"
+    "#{System.get_env("CLOUDFLARE_PUBLIC_URL")}/#{file_name}" |> IO.inspect(label: "CLOUDFLARE_PUBLIC_URL")
   end
 end
