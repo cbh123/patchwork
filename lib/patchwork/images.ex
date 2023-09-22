@@ -20,6 +20,9 @@ defmodule Patchwork.Images do
       |> Image.write!(:memory, suffix: ".png")
       |> binary_to_data_uri("image/png")
 
+    gen_image(top_image, left_image, base) |> Image.write("image.png", png: [])
+    gen_mask(top_image, left_image, base)  |> Image.write("mask.png", png: [])
+
     %{image: image, mask: mask, height: height, width: width}
   end
 
@@ -28,31 +31,48 @@ defmodule Patchwork.Images do
     image = fetch_image(image_url)
 
     # Calculate the x, y coordinates for cropping the bottom right portion
-    {width, height} = {Image.width(image), Image.height(image)}
+    {width, height} = {Image.width(image), Image.height(image)} |> IO.inspect(label: "image height/width")
     x = width - @height
     y = height - @height
 
     # Crop the image starting at the calculated coordinates
-    cropped_image = Image.crop!(image, x, y, @height, @height)
+    cropped_image = Image.crop!(image, x, y, 768, 768)
 
     # Write the cropped image to a buffer
     cropped_image |> Image.write!(:memory, suffix: ".png") |> binary_to_data_uri("image/png")
+    # image_url
   end
 
-  defp left_mask(), do: Image.Shape.rect!(@mask_size, @height, fill_color: "black")
-  defp top_mask(), do: Image.Shape.rect!(@height, @mask_size, fill_color: "black")
+  defp left_mask(), do: Image.Shape.rect!(@mask_size, @height, fill_color: "black", opacity: 1.0)
+  defp top_mask(), do: Image.Shape.rect!(@height, @mask_size, fill_color: "black", opacity: 1.0)
 
-  defp left_crop(image), do: Image.crop!(image, @height - @mask_size, 0, @mask_size, @height)
-  defp top_crop(image), do: Image.crop!(image, 0, @height - @mask_size, @height, @mask_size)
-
-  defp gen_image(top_image, nil, base) do
-    base
-    |> Image.compose!(top_crop(top_image), x: 0, y: 0)
+  defp left_crop(image) do
+    height = Image.height(image)
+    width = Image.width(image)
+    Image.crop!(image, width - @mask_size, @mask_size, @mask_size, height - @mask_size)
   end
 
-  defp gen_image(nil, left_image, base) do
-    base
-    |> Image.compose!(left_crop(left_image), x: 0, y: 0)
+  defp top_crop(image) do
+    height = Image.height(image)
+    width = Image.width(image)
+    Image.crop!(image, @mask_size, height - @mask_size, width - @mask_size , @mask_size)
+  end
+
+  defp gen_image(image, nil, base) do
+    height = Image.height(image)
+    width = Image.width(image)
+
+    top_crop = Image.crop!(image, 0, height - @mask_size, width, @mask_size)
+    base |> Image.compose!(top_crop, x: 0, y: 0)
+  end
+
+  defp gen_image(nil, image, base) do
+    height = Image.height(image)
+    width = Image.width(image)
+
+    left_crop = Image.crop!(image, width - @mask_size, 0, @mask_size, height)
+
+    base |> Image.compose!(left_crop, x: 0, y: 0)
   end
 
   defp gen_image(top_image, left_image, base) do
@@ -88,5 +108,30 @@ defmodule Patchwork.Images do
   defp binary_to_data_uri(binary, mime_type) do
     base64 = Base.encode64(binary)
     "data:#{mime_type};base64,#{base64}"
+  end
+
+  def save_r2(image_binary, uuid) when is_binary(image_binary) do
+    file_name = "prediction-#{uuid}.png"
+    bucket = System.get_env("BUCKET_NAME")
+
+    %{status_code: 200} =
+      ExAws.S3.put_object(bucket, file_name, image_binary)
+      |> ExAws.request!()
+
+    "#{System.get_env("CLOUDFLARE_PUBLIC_URL")}/#{file_name}"
+  end
+
+  def save_r2!(image_url, uuid) do
+    {:ok, resp} = :httpc.request(:get, {image_url, []}, [], body_format: :binary)
+    {{_, 200, ~c"OK"}, _headers, image_binary} = resp
+
+    file_name = "prediction-#{uuid}.png"
+    bucket = System.get_env("BUCKET_NAME")
+
+    %{status_code: 200} =
+      ExAws.S3.put_object(bucket, file_name, image_binary)
+      |> ExAws.request!()
+
+    "#{System.get_env("CLOUDFLARE_PUBLIC_URL")}/#{file_name}"
   end
 end

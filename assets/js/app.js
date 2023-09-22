@@ -26,7 +26,7 @@ Hooks = {}
 
 Hooks.Download = {
     mounted() {
-        this.el.addEventListener("click", (e) => {
+        this.el.addEventListener("click", (_e) => {
             console.log("hi there")
         })
     }

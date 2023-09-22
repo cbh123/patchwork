@@ -1,4 +1,5 @@
 defmodule Patchwork.Games.Game do
+  @enforce_keys [:patches, :height, :width]
   defstruct patches: %{},
             height: nil,
             width: nil,
@@ -7,8 +8,8 @@ defmodule Patchwork.Games.Game do
             state: :start,
             loading_patches: []
 
-  @height 10
-  @width 10
+  @height 3
+  @width 3
 
   defp init_patches() do
     for(i <- 0..(@height - 1), do: for(j <- 0..(@width - 1), do: {{i, j}, nil}))

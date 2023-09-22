@@ -54,7 +54,9 @@ defmodule Patchwork.MixProject do
       {:openai, "~> 0.5.2"},
       {:ai, "~> 0.3.3"},
       {:image, "~> 0.37"},
-      {:req, "~> 0.4.3"}
+      {:req, "~> 0.4.3"},
+      {:ex_aws, "~> 2.1"},
+      {:ex_aws_s3, "~> 2.0"},
     ]
   end
 
