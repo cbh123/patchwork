@@ -17,7 +17,8 @@ defmodule PatchworkWeb.Router do
   scope "/", PatchworkWeb do
     pipe_through :browser
 
-    live "/", IndexLive, :index
+    live "/", HomeLive, :index
+    live "/:game_id", GameLive, :index
   end
 
   # Other scopes may use custom stacks.

@@ -1,5 +1,6 @@
 defmodule Patchwork.GameTest do
-  use Patchwork.DataCase
+  # use Patchwork.DataCase
+  use ExUnit.Case
 
   describe "game" do
     alias Patchwork.Games
@@ -8,7 +9,8 @@ defmodule Patchwork.GameTest do
 
     test "basic gameplay" do
       assert @game.patches[{9, 9}] == nil
-      assert @game.current_patch == nil
+      assert @game.current_patch_x == nil
+      assert @game.current_patch_y == nil
 
       # pick first patch
       curr = Games.pick_next_patch(@game)
@@ -16,7 +18,8 @@ defmodule Patchwork.GameTest do
 
       # update game
       game = Games.select_patch(@game, curr)
-      assert game.current_patch == {0, 0}
+      assert game.current_patch_x == 0
+      assert game.current_patch_y == 0
 
       # set patch
       url = Games.gen_test_image(@game, curr, "cat")
@@ -40,6 +43,8 @@ defmodule Patchwork.GameTest do
       curr = @game |> Games.pick_next_patch()
 
       assert curr == {0, 0}
+
+      game = @game
 
       game =
         Games.set_patch!(@game, curr, "test")
