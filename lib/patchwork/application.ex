@@ -17,7 +17,10 @@ defmodule Patchwork.Application do
       # Start Finch
       {Finch, name: Patchwork.Finch},
       # Start the Endpoint (http/https)
-      PatchworkWeb.Endpoint
+      PatchworkWeb.Endpoint,
+      # Start the Game Supervisor
+      Patchwork.GameSupervisor,
+      {Registry, keys: :unique, name: Patchwork.GameRegistry}
       # Start a worker by calling: Patchwork.Worker.start_link(arg)
       # {Patchwork.Worker, arg}
     ]

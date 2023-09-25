@@ -1,11 +1,16 @@
 defmodule PatchworkWeb.GameLive do
   use PatchworkWeb, :live_view
   alias Patchwork.Games
+  alias Patchwork.Manager
 
   def mount(%{"game_id" => game_id}, _session, socket) do
-    if connected?(socket), do: Games.subscribe()
+    if connected?(socket), do: Games.subscribe(game_id)
 
     game = Games.get_game!(game_id)
+
+    unless Manager.whereis(game) do
+      Patchwork.GameSupervisor.start_game(game)
+    end
 
     {:ok,
      socket
@@ -17,9 +22,10 @@ defmodule PatchworkWeb.GameLive do
   end
 
   def handle_event("submit", %{"prompt" => prompt}, socket) do
-    Task.async(fn -> Games.handle_prediction(socket.assigns.game, prompt, socket.assigns.me) end)
-
-    {:noreply, socket}
+    case Manager.handle_prediction(socket.assigns.game, prompt, socket.assigns.me) do
+      :ok -> {:noreply, socket}
+      str -> {:noreply, socket |> put_flash(:error, str)}
+    end
   end
 
   def handle_event("submit-settings", %{"height" => height, "width" => width}, socket) do
@@ -44,20 +50,7 @@ defmodule PatchworkWeb.GameLive do
   end
 
   def handle_info({:update, game}, socket) do
-    socket = assign(socket, game: game)
-    {:noreply, socket}
-  end
-
-  def handle_info({ref, {:ok, game}}, socket) do
-    Process.demonitor(ref, [:flush])
-
-    {:noreply, socket}
-  end
-
-  def handle_info({ref, {msg, game}}, socket) do
-    Process.demonitor(ref, [:flush])
-
-    {:noreply, socket |> put_flash(:error, msg)}
+    {:noreply, socket |> assign(game: game)}
   end
 
   defp get(game, {row, col}) do

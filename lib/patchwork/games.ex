@@ -42,7 +42,10 @@ defmodule Patchwork.Games do
       width: 768,
       height: 768
     )
-    |> Enum.at(0)
+    |> case do
+      nil -> nil
+      [image] -> image
+    end
   end
 
   def gen_image(game, {x, y}, prompt) do
@@ -72,18 +75,14 @@ defmodule Patchwork.Games do
   end
 
   def gen_test_image(_game, {x, y}, _prompt) do
-    if x < 2 or y < 2 do
-      Process.sleep(100)
-    else
-      Process.sleep(10_000)
-    end
+    Process.sleep(2000)
 
     "https://robohash.org/1#{x}#{y}"
   end
 
   @doc """
-  Picks next patch. Next patch is at the top left, or it hais
-  top and left neighbors.
+  Picks next patch. Next patch is at the top left, or it has
+  top and left neighbors. Returns {x, y} or nil if no patch
   """
   def pick_next_patch(game) do
     possible_coordinates =
@@ -207,6 +206,7 @@ defmodule Patchwork.Games do
     |> Game.changeset(attrs)
     |> Repo.update!()
     |> Game.convert_to_internal_state()
+    |> broadcast()
   end
 
   @doc """
@@ -239,17 +239,6 @@ defmodule Patchwork.Games do
   end
 
   # Live game logic
-  def handle_prediction(game, prompt, user) do
-    if all_patches_full?(game) do
-      game = game |> update_game!(%{state: :finished}) |> broadcast()
-      {:ok, game}
-    else
-      game
-      |> pick_next_patch()
-      |> handle_next_patch(prompt, user, game)
-    end
-  end
-
   def resize(game, height, width) do
     {:ok, _game} = delete_game(game)
     {:ok, new(height, width)}
@@ -260,36 +249,10 @@ defmodule Patchwork.Games do
     {:ok, new()}
   end
 
-  defp handle_next_patch(nil, _prompt, _user, game) do
-    {"No available squares — wait for some to load", game}
-  end
-
-  defp handle_next_patch({x, y}, prompt, user, game) do
-    game =
-      game
-      |> update_game!(%{loading_patches: game.loading_patches ++ [{x, y}], state: :started})
-      |> add_log("#{user} prompted '#{prompt}'")
-      |> broadcast()
-
-    image = gen_image(game, {x, y}, prompt)
-
-    game =
-      game
-      |> update_game!(%{loading_patches: Enum.filter(game.loading_patches, &(&1 != {x, y}))})
-      |> set_patch!({x, y}, image)
-      |> broadcast()
-
-    if image == nil do
-      {"NSFW content detected — sorry! Try again...", game}
-    else
-      {:ok, game}
-    end
-  end
-
-  defp broadcast(game) do
-    Phoenix.PubSub.broadcast(Patchwork.PubSub, "play", {:update, game})
+  def broadcast(game) do
+    Phoenix.PubSub.broadcast(Patchwork.PubSub, "play:" <> game.id, {:update, game})
     game
   end
 
-  def subscribe(), do: Phoenix.PubSub.subscribe(Patchwork.PubSub, "play")
+  def subscribe(game_id), do: Phoenix.PubSub.subscribe(Patchwork.PubSub, "play:" <> game_id)
 end

@@ -3,33 +3,34 @@ defmodule Patchwork.Manager do
   alias Patchwork.Games
 
   def start_link(game) do
-    {:ok, pid} = GenServer.start_link(__MODULE__, game)
-    {:ok, pid}
+    GenServer.start_link(__MODULE__, game, name: via_tuple(game.id))
+  end
+
+  defp via_tuple(game_id) do
+    {:via, Registry, {Patchwork.GameRegistry, game_id}}
+  end
+
+  def whereis(game) do
+    GenServer.whereis(via_tuple(game.id))
   end
 
   def init(game) do
     {:ok, game}
   end
 
+  def handle_prediction(game, prompt, user) do
+    GenServer.call(via_tuple(game.id), {:handle_prediction, prompt, user})
+  end
+
   def handle_call({:handle_prediction, prompt, user}, _from, game) do
     if Games.all_patches_full?(game) do
-      game = game |> Games.update_game!(%{state: :finished}) |> broadcast()
+      game = Games.update_game!(game, %{state: :finished})
       {:reply, :ok, game}
     else
       game
       |> Games.pick_next_patch()
       |> handle_next_patch(prompt, user, game)
     end
-  end
-
-  def handle_call({:resize, height, width}, _from, _game) do
-    game = Games.new(height, width) |> broadcast()
-    {:reply, :ok, game}
-  end
-
-  def handle_call(:reset_game, _from, _game) do
-    game = Games.new() |> broadcast()
-    {:reply, :ok, game}
   end
 
   defp handle_next_patch(nil, _prompt, _user, game) do
@@ -44,18 +45,25 @@ defmodule Patchwork.Manager do
       |> Games.select_patch({x, y})
       |> Games.update_game!(%{loading_patches: game.loading_patches ++ [{x, y}], state: :started})
       |> Games.add_log("#{user} prompted '#{prompt}'")
-      |> broadcast()
 
     {:reply, :ok, game}
+  end
+
+  def handle_info({ref, {{row, col}, nil}}, game) do
+    Process.demonitor(ref, [:flush])
+
+    {:noreply, game}
   end
 
   def handle_info({ref, {{row, col}, image}}, game) do
     Process.demonitor(ref, [:flush])
 
     game =
-      %{game | loading_patches: Enum.filter(game.loading_patches, &(&1 != {row, col}))}
+      game
+      |> Games.update_game!(%{
+        loading_patches: Enum.filter(game.loading_patches, &(&1 != {row, col}))
+      })
       |> Games.set_patch!({row, col}, image)
-      |> broadcast()
 
     {:noreply, game}
   end
@@ -64,11 +72,4 @@ defmodule Patchwork.Manager do
     image = Games.gen_image(game, {row, col}, prompt)
     {{row, col}, image}
   end
-
-  defp broadcast(game) do
-    Phoenix.PubSub.broadcast(Patchwork.PubSub, "play", {:update, game})
-    game
-  end
-
-  def subscribe(), do: Phoenix.PubSub.subscribe(Patchwork.PubSub, "play")
 end
