@@ -19,6 +19,13 @@ defmodule Patchwork.Games do
     update_game!(game, %{logs: game.logs ++ [log]})
   end
 
+  def get_patch!(game, {x, y}) do
+    game
+    |> Game.convert_to_internal_state()
+    |> Map.get(:patches)
+    |> Map.get({x, y})
+  end
+
   def set_patch!(game, {x, y}, url) do
     new_patches = Map.put(game.patches, {x, y}, url)
     update_game!(game, %{patches: new_patches})
@@ -130,6 +137,10 @@ defmodule Patchwork.Games do
   """
   def list_games do
     Repo.all(Game)
+  end
+
+  def list_games_where_top_left_is_not_nil do
+    from(g in Game, where: not is_nil(g.patches["{0, 0}"])) |> Repo.all()
   end
 
   @doc """
