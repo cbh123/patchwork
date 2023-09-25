@@ -3,7 +3,7 @@ defmodule Patchwork.Manager do
   alias Patchwork.Games
 
   def start_link(game) do
-    {:ok, pid} = GenServer.start_link(__MODULE__, game, name: __MODULE__)
+    {:ok, pid} = GenServer.start_link(__MODULE__, game)
     {:ok, pid}
   end
 
@@ -13,22 +13,13 @@ defmodule Patchwork.Manager do
 
   def handle_call({:handle_prediction, prompt, user}, _from, game) do
     if Games.all_patches_full?(game) do
-      game = game |> Games.update(:state, :finished) |> broadcast()
+      game = game |> Games.update_game!(%{state: :finished}) |> broadcast()
       {:reply, :ok, game}
     else
       game
       |> Games.pick_next_patch()
       |> handle_next_patch(prompt, user, game)
     end
-  end
-
-  def handle_call(:get_game, _from, game) do
-    {:reply, game, game}
-  end
-
-  def handle_call({:add_player, player}, _from, game) do
-    game = Games.add_player(game, player) |> broadcast()
-    {:reply, :ok, game}
   end
 
   def handle_call({:resize, height, width}, _from, _game) do
@@ -51,8 +42,7 @@ defmodule Patchwork.Manager do
     game =
       game
       |> Games.select_patch({x, y})
-      |> Games.update(:loading_patches, game.loading_patches ++ [{x, y}])
-      |> Games.update(:state, :started)
+      |> Games.update_game!(%{loading_patches: game.loading_patches ++ [{x, y}], state: :started})
       |> Games.add_log("#{user} prompted '#{prompt}'")
       |> broadcast()
 

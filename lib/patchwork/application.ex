@@ -17,8 +17,7 @@ defmodule Patchwork.Application do
       # Start Finch
       {Finch, name: Patchwork.Finch},
       # Start the Endpoint (http/https)
-      PatchworkWeb.Endpoint,
-      {Patchwork.Manager, Patchwork.Games.Game.new()}
+      PatchworkWeb.Endpoint
       # Start a worker by calling: Patchwork.Worker.start_link(arg)
       # {Patchwork.Worker, arg}
     ]

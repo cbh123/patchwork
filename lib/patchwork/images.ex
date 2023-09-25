@@ -53,8 +53,8 @@ defmodule Patchwork.Images do
   end
 
   defp top_crop(image) do
-    height = Image.height(image) |> IO.inspect(label: "top crop height")
-    width = Image.width(image) |> IO.inspect(label: "top crop width")
+    height = Image.height(image)
+    width = Image.width(image)
     Image.crop!(image, 0, height - @mask_size, width, @mask_size)
   end
 
