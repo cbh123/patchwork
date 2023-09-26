@@ -65,7 +65,13 @@
 </div>
 
 <form class="fixed bottom-0 w-full p-4 flex bg-slate-100 shadow-md" phx-submit="submit">
-  <input type="text" class="flex-grow" name="prompt" placeholder="Enter a prompt to add a patch" />
+  <input
+    type="text"
+    class="flex-grow"
+    name="prompt"
+    required="true"
+    placeholder="Enter a prompt to add a patch"
+  />
   <.button type="submit" class="rounded-none">
     Go
   </.button>
